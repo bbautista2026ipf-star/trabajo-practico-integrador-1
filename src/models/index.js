@@ -26,16 +26,18 @@ ArticleModel.belongsTo(UserModel, { foreignKey: "user_id", as: "author" });
 // N:M Article - Tag
 // Al borrar una etiqueta, o un artículo físicamente, la cascada elimina sus
 // filas en ArticleTag. La eliminación lógica de un artículo no borra la fila,
-// por eso su controlador elimina esas asociaciones
+// por eso su controlador elimina esas asociaciones.
+// unique: false evita que Sequelize agregue otro índice único sobre
+// (article_id, tag_id): ese índice ya lo define el modelo ArticleTag
 ArticleModel.belongsToMany(TagModel, {
-  through: ArticleTagModel,
+  through: { model: ArticleTagModel, unique: false },
   foreignKey: "article_id",
   otherKey: "tag_id",
   as: "tags",
   onDelete: "CASCADE",
 });
 TagModel.belongsToMany(ArticleModel, {
-  through: ArticleTagModel,
+  through: { model: ArticleTagModel, unique: false },
   foreignKey: "tag_id",
   otherKey: "article_id",
   as: "articles",
