@@ -8,6 +8,7 @@ import { authRoutes } from "./src/routes/auth.routes.js";
 import { userRoutes } from "./src/routes/user.routes.js";
 import { tagRoutes } from "./src/routes/tag.routes.js";
 import { articleRoutes } from "./src/routes/article.routes.js";
+import { articleTagRoutes } from "./src/routes/articleTag.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ app.use("/api", authRoutes);
 app.use("/api", userRoutes);
 app.use("/api", tagRoutes);
 app.use("/api", articleRoutes);
+app.use("/api", articleTagRoutes);
 
 await connectDB();
 
