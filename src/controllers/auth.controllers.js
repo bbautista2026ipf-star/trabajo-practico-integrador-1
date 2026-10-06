@@ -4,6 +4,14 @@ import { UserModel, ProfileModel } from "../models/index.js";
 import { hashPassword, comparePassword } from "../helpers/bcrypt.helper.js";
 import { generateToken } from "../helpers/jwt.helper.js";
 
+// Mismas opciones al crear y al limpiar la cookie: si no coinciden, el
+// navegador no la borra. secure exige HTTPS, por eso solo en producción
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: "strict",
+  secure: process.env.NODE_ENV === "production",
+};
+
 export const register = async (req, res) => {
   try {
     const { username, email, password, ...profileData } = matchedData(req);
@@ -49,11 +57,7 @@ export const login = async (req, res) => {
       role: user.role,
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "strict",
-      maxAge: 1000 * 60 * 60,
-    });
+    res.cookie("token", token, { ...cookieOptions, maxAge: 1000 * 60 * 60 });
 
     return res.status(200).json({ message: "Login exitoso" });
   } catch (error) {
@@ -109,7 +113,7 @@ export const updateProfile = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", cookieOptions);
     return res.status(200).json({ message: "Logout exitoso" });
   } catch (error) {
     console.error(error);
