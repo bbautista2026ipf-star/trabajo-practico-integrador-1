@@ -30,8 +30,9 @@ export const tagIdValidations = [
 
 export const createTagValidations = [
   body("name")
+    .notEmpty({ ignore_whitespace: true }).withMessage("El nombre es obligatorio").bail()
+    .isString().withMessage("El nombre debe ser un texto").bail()
     .trim()
-    .notEmpty().withMessage("El nombre es obligatorio").bail()
     .isLength({ min: 2, max: 30 }).withMessage("El nombre debe tener entre 2 y 30 caracteres")
     .matches(/^\S+$/).withMessage("El nombre no puede tener espacios").bail()
     .custom(isUniqueName),
