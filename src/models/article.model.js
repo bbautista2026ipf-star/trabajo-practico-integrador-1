@@ -27,6 +27,7 @@ export const ArticleModel = sequelize.define(
   },
   {
     timestamps: true,
+    paranoid: true,
     underscored: true,
   },
 );

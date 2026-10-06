@@ -1,8 +1,21 @@
 import { matchedData } from "express-validator";
-import { ArticleModel, UserModel, TagModel } from "../models/index.js";
+import { sequelize } from "../config/database.js";
+import {
+  ArticleModel,
+  ArticleTagModel,
+  UserModel,
+  TagModel,
+} from "../models/index.js";
 
+// required: true hace un INNER JOIN con el autor, así no se muestran los
+// artículos de usuarios eliminados lógicamente
 const articleIncludes = [
-  { model: UserModel, as: "author", attributes: ["id", "username"] },
+  {
+    model: UserModel,
+    as: "author",
+    attributes: ["id", "username"],
+    required: true,
+  },
   {
     model: TagModel,
     as: "tags",
@@ -114,7 +127,9 @@ export const updateArticle = async (req, res) => {
   }
 };
 
-// Se borra la fila: la cascada elimina sus asociaciones en ArticleTag
+// Eliminación lógica (paranoid): la fila queda con deleted_at, así que la
+// cascada de la base de datos no actúa. Las asociaciones con etiquetas se
+// eliminan en la misma transacción: o se hacen las dos cosas o ninguna
 export const deleteArticle = async (req, res) => {
   try {
     const article = await ArticleModel.findByPk(req.params.id);
@@ -123,7 +138,13 @@ export const deleteArticle = async (req, res) => {
       return res.status(404).json({ message: "Artículo no encontrado" });
     }
 
-    await article.destroy();
+    await sequelize.transaction(async (transaction) => {
+      await ArticleTagModel.destroy({
+        where: { article_id: article.id },
+        transaction,
+      });
+      await article.destroy({ transaction });
+    });
 
     return res.status(200).json({ message: "Artículo eliminado" });
   } catch (error) {
