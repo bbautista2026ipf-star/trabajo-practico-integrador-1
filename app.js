@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./src/config/database.js";
 import "./src/models/index.js";
+import { authRoutes } from "./src/routes/auth.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,8 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use("/api", authRoutes);
 
 await connectDB();
 
