@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./src/config/database.js";
+import "./src/models/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
