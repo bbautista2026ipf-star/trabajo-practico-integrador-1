@@ -4,7 +4,7 @@ API REST para gestionar un blog personal: usuarios con perfil, artículos y etiq
 
 ## Tecnologías
 
-Node.js, Express, ES Modules, Sequelize, MySQL, express-validator, jsonwebtoken, bcrypt, cookie-parser, cors y dotenv.
+Node.js, Express 5, ES Modules, Sequelize, MySQL, express-validator, jsonwebtoken, bcrypt, cookie-parser, cors y dotenv. En desarrollo se usa nodemon.
 
 ## Instalación
 
@@ -25,7 +25,9 @@ CREATE DATABASE blog_integrador;
 | Variable | Descripción |
 |---|---|
 | `PORT` | Puerto del servidor |
+| `NODE_ENV` | `development` o `production`. En producción la cookie se envía solo por HTTPS (`secure`) |
 | `DB_HOST` | Host de MySQL |
+| `DB_PORT` | Puerto de MySQL (3306 por defecto) |
 | `DB_USER` | Usuario de MySQL |
 | `DB_PASSWORD` | Contraseña de MySQL |
 | `DB_NAME` | Nombre de la base de datos |
@@ -34,10 +36,17 @@ CREATE DATABASE blog_integrador;
 4. Iniciar el servidor:
 
 ```bash
-npm run dev
+npm run dev   # desarrollo, con nodemon
+npm start     # sin reinicio automático
 ```
 
-Las tablas se crean al iniciar. Para tener un administrador, registrar un usuario y cambiar su `role` a `admin` en MySQL.
+Las tablas se crean al iniciar con `sequelize.sync()`, que no modifica tablas existentes. Si la base se creó con una versión anterior del proyecto, hay que borrarla y crearla de nuevo.
+
+Para tener un administrador, registrar un usuario y cambiarle el rol en MySQL. El cambio se aplica sin volver a iniciar sesión:
+
+```sql
+UPDATE users SET role = 'admin' WHERE username = 'nombre_de_usuario';
+```
 
 ## Estructura
 
@@ -48,7 +57,7 @@ Las tablas se crean al iniciar. Para tener un administrador, registrar un usuari
     ├── models/        modelos y relaciones
     ├── routes/        rutas por recurso
     ├── controllers/   lógica de cada endpoint
-    ├── middlewares/   autenticación, autorización y validaciones
+    ├── middlewares/   autenticación, autorización, validaciones y errores
     └── helpers/       JWT y bcrypt
 ```
 
@@ -60,8 +69,11 @@ Las tablas se crean al iniciar. Para tener un administrador, registrar un usuari
 | User - Article | 1:N | `articles` / `author` |
 | Article - Tag (a través de ArticleTag) | N:M | `tags` / `articles` |
 
-- **Eliminación lógica:** `User` (`paranoid: true`, columna `deleted_at`).
-- **Eliminación en cascada:** al eliminar un artículo o una etiqueta se eliminan sus filas en `article_tags`. También `profiles` y `articles` tienen cascada respecto de `users`.
+### Eliminaciones
+
+- **Eliminación lógica:** `User` y `Article` (`paranoid: true`, columna `deleted_at`). Un usuario eliminado no puede iniciar sesión ni seguir usando su token, y sus artículos dejan de listarse.
+- **Eliminación en cascada:** las claves foráneas de `profiles`, `articles` y `article_tags` tienen `ON DELETE CASCADE`. Al eliminar una etiqueta se borran sus filas en `article_tags`.
+- **Artículos:** como la eliminación es lógica, la fila no se borra y la cascada de la base de datos no actúa. Por eso el controlador elimina las asociaciones del artículo con sus etiquetas en la misma transacción.
 
 ## Endpoints
 
@@ -83,7 +95,7 @@ Las tablas se crean al iniciar. Para tener un administrador, registrar un usuari
 | GET | `/api/users/:id` | Admin |
 | POST | `/api/users` | Admin |
 | PUT | `/api/users/:id` | Admin |
-| DELETE | `/api/users/:id` | Admin |
+| DELETE | `/api/users/:id` | Admin (eliminación lógica) |
 
 ### Etiquetas
 
@@ -105,7 +117,7 @@ Las tablas se crean al iniciar. Para tener un administrador, registrar un usuari
 | GET | `/api/articles/user` | Autenticado |
 | GET | `/api/articles/user/:id` | Autenticado |
 | PUT | `/api/articles/:id` | Autor o admin |
-| DELETE | `/api/articles/:id` | Autor o admin |
+| DELETE | `/api/articles/:id` | Autor o admin (eliminación lógica) |
 
 ### Etiquetas de artículos
 
@@ -120,8 +132,25 @@ Las tablas se crean al iniciar. Para tener un administrador, registrar un usuari
 |---|---|
 | 200 | Consulta, actualización o eliminación exitosa |
 | 201 | Recurso creado |
-| 400 | Error de validación |
-| 401 | Sin sesión o token inválido |
+| 400 | Error de validación o body con JSON mal formado |
+| 401 | Sin sesión, token inválido o usuario eliminado |
 | 403 | Sin permisos |
-| 404 | Recurso inexistente |
+| 404 | Recurso o ruta inexistente |
 | 500 | Error inesperado |
+
+Los errores de validación devuelven un mensaje y la lista de campos con error:
+
+```json
+{
+  "message": "Error de validación",
+  "errors": [
+    {
+      "type": "field",
+      "value": "ab",
+      "msg": "El username debe tener entre 3 y 20 caracteres",
+      "path": "username",
+      "location": "body"
+    }
+  ]
+}
+```

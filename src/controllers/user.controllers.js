@@ -1,4 +1,5 @@
 import { matchedData } from "express-validator";
+import { sequelize } from "../config/database.js";
 import { UserModel, ProfileModel, ArticleModel } from "../models/index.js";
 import { hashPassword } from "../helpers/bcrypt.helper.js";
 
@@ -47,13 +48,19 @@ export const createUser = async (req, res) => {
       matchedData(req);
 
     const hashedPassword = await hashPassword(password);
-    const user = await UserModel.create({
-      username,
-      email,
-      password: hashedPassword,
-      role,
+
+    // Usuario y perfil se crean juntos: si uno falla, no se guarda ninguno
+    const user = await sequelize.transaction(async (transaction) => {
+      const newUser = await UserModel.create(
+        { username, email, password: hashedPassword, role },
+        { transaction },
+      );
+      await ProfileModel.create(
+        { ...profileData, user_id: newUser.id },
+        { transaction },
+      );
+      return newUser;
     });
-    await ProfileModel.create({ ...profileData, user_id: user.id });
 
     return res.status(201).json({
       message: "Usuario creado exitosamente",

@@ -4,6 +4,9 @@ import { ArticleModel } from "./article.model.js";
 import { TagModel } from "./tag.model.js";
 import { ArticleTagModel } from "./articleTag.model.js";
 
+// User es paranoid: la cascada hacia Profile y Article solo actúa si el
+// usuario se borra físicamente (force: true)
+
 // 1:1 User - Profile
 UserModel.hasOne(ProfileModel, {
   foreignKey: "user_id",
@@ -21,16 +24,22 @@ UserModel.hasMany(ArticleModel, {
 ArticleModel.belongsTo(UserModel, { foreignKey: "user_id", as: "author" });
 
 // N:M Article - Tag
-// Al eliminar un artículo o una etiqueta se eliminan sus filas en ArticleTag
+// Al borrar una etiqueta, o un artículo físicamente, la cascada elimina sus
+// filas en ArticleTag. La eliminación lógica de un artículo no borra la fila,
+// por eso su controlador elimina esas asociaciones.
+// unique: false evita que Sequelize agregue otro índice único sobre
+// (article_id, tag_id): ese índice ya lo define el modelo ArticleTag
 ArticleModel.belongsToMany(TagModel, {
-  through: ArticleTagModel,
+  through: { model: ArticleTagModel, unique: false },
   foreignKey: "article_id",
+  otherKey: "tag_id",
   as: "tags",
   onDelete: "CASCADE",
 });
 TagModel.belongsToMany(ArticleModel, {
-  through: ArticleTagModel,
+  through: { model: ArticleTagModel, unique: false },
   foreignKey: "tag_id",
+  otherKey: "article_id",
   as: "articles",
   onDelete: "CASCADE",
 });

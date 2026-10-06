@@ -3,7 +3,7 @@ import { ArticleModel, UserModel } from "../../models/index.js";
 
 export const articleIdValidations = [
   param("id")
-    .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo")
+    .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
     .custom(async (id) => {
       const article = await ArticleModel.findByPk(id);
       if (!article) {
@@ -15,13 +15,16 @@ export const articleIdValidations = [
 
 export const createArticleValidations = [
   body("title")
-    .notEmpty().withMessage("El título es obligatorio")
+    .trim()
+    .notEmpty().withMessage("El título es obligatorio").bail()
     .isLength({ min: 3, max: 200 }).withMessage("El título debe tener entre 3 y 200 caracteres"),
   body("content")
-    .notEmpty().withMessage("El contenido es obligatorio")
+    .trim()
+    .notEmpty().withMessage("El contenido es obligatorio").bail()
     .isLength({ min: 50 }).withMessage("El contenido debe tener al menos 50 caracteres"),
   body("excerpt")
     .optional()
+    .trim()
     .isLength({ max: 500 }).withMessage("El resumen no puede superar los 500 caracteres"),
   body("status")
     .optional()
@@ -29,7 +32,7 @@ export const createArticleValidations = [
   // Si no se envía, el autor es el usuario logueado. Solo un admin puede indicar otro
   body("user_id")
     .optional()
-    .isInt({ min: 1 }).withMessage("El user_id debe ser un entero positivo")
+    .isInt({ min: 1 }).withMessage("El user_id debe ser un entero positivo").bail()
     .custom(async (userId, { req }) => {
       const user = await UserModel.findByPk(userId);
       if (!user) {
@@ -46,12 +49,15 @@ export const updateArticleValidations = [
   ...articleIdValidations,
   body("title")
     .optional()
+    .trim()
     .isLength({ min: 3, max: 200 }).withMessage("El título debe tener entre 3 y 200 caracteres"),
   body("content")
     .optional()
+    .trim()
     .isLength({ min: 50 }).withMessage("El contenido debe tener al menos 50 caracteres"),
   body("excerpt")
     .optional()
+    .trim()
     .isLength({ max: 500 }).withMessage("El resumen no puede superar los 500 caracteres"),
   body("status")
     .optional()

@@ -7,7 +7,7 @@ import {
 
 export const createArticleTagValidations = [
   body("article_id")
-    .isInt({ min: 1 }).withMessage("El article_id debe ser un entero positivo")
+    .isInt({ min: 1 }).withMessage("El article_id debe ser un entero positivo").bail()
     .custom(async (articleId) => {
       const article = await ArticleModel.findByPk(articleId);
       if (!article) {
@@ -16,7 +16,7 @@ export const createArticleTagValidations = [
       return true;
     }),
   body("tag_id")
-    .isInt({ min: 1 }).withMessage("El tag_id debe ser un entero positivo")
+    .isInt({ min: 1 }).withMessage("El tag_id debe ser un entero positivo").bail()
     .custom(async (tagId, { req }) => {
       const tag = await TagModel.findByPk(tagId);
       if (!tag) {
@@ -35,7 +35,7 @@ export const createArticleTagValidations = [
 
 export const articleTagIdValidations = [
   param("articleTagId")
-    .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo")
+    .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
     .custom(async (id) => {
       const articleTag = await ArticleTagModel.findByPk(id);
       if (!articleTag) {
