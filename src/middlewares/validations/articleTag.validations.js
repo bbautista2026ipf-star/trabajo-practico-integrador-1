@@ -1,3 +1,4 @@
+// Validaciones de la relación artículo-etiqueta
 import { body, param } from "express-validator";
 import {
   ArticleModel,
@@ -5,6 +6,7 @@ import {
   ArticleTagModel,
 } from "../../models/index.js";
 
+// Creación: artículo y etiqueta existentes, sin asociación repetida
 export const createArticleTagValidations = [
   body("article_id")
     .isInt({ min: 1 }).withMessage("El article_id debe ser un entero positivo").bail()
@@ -17,6 +19,7 @@ export const createArticleTagValidations = [
     }),
   body("tag_id")
     .isInt({ min: 1 }).withMessage("El tag_id debe ser un entero positivo").bail()
+    // { req } da acceso al body para detectar el duplicado
     .custom(async (tagId, { req }) => {
       const tag = await TagModel.findByPk(tagId);
       if (!tag) {
@@ -33,6 +36,7 @@ export const createArticleTagValidations = [
     }),
 ];
 
+// param articleTagId: entero positivo y asociación existente
 export const articleTagIdValidations = [
   param("articleTagId")
     .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
