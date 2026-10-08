@@ -1,6 +1,8 @@
+// Validaciones de artículos (express-validator); bail() corta en el primer error
 import { body, param } from "express-validator";
 import { ArticleModel, UserModel } from "../../models/index.js";
 
+// param id: entero positivo y artículo existente (custom asíncrono)
 export const articleIdValidations = [
   param("id")
     .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
@@ -13,6 +15,7 @@ export const articleIdValidations = [
     }),
 ];
 
+// Creación: title y content obligatorios; excerpt y status opcionales
 export const createArticleValidations = [
   body("title")
     .notEmpty({ ignore_whitespace: true }).withMessage("El título es obligatorio").bail()
@@ -49,6 +52,7 @@ export const createArticleValidations = [
     }),
 ];
 
+// Edición: id válido (spread) y todos los campos opcionales
 export const updateArticleValidations = [
   ...articleIdValidations,
   body("title")

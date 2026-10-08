@@ -1,3 +1,4 @@
+// Rutas de la relación artículo-etiqueta
 import { Router } from "express";
 import {
   addTagToArticle,
@@ -11,6 +12,7 @@ import {
   articleTagIdValidations,
 } from "../middlewares/validations/articleTag.validations.js";
 
+// Solo el autor del artículo agrega o quita etiquetas (articleTagOwnerMiddleware)
 export const articleTagRoutes = Router();
 
 // Se valida antes de verificar la autoría: el artículo tiene que existir

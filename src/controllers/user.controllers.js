@@ -1,8 +1,10 @@
+// Controladores de usuarios (CRUD, solo admin)
 import { matchedData } from "express-validator";
 import { sequelize } from "../config/database.js";
 import { UserModel, ProfileModel, ArticleModel } from "../models/index.js";
 import { hashPassword } from "../helpers/bcrypt.helper.js";
 
+// GET /users: sin password, con el perfil (include -> JOIN)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await UserModel.findAll({
@@ -12,11 +14,13 @@ export const getAllUsers = async (req, res) => {
 
     return res.status(200).json(users);
   } catch (error) {
+    // Error inesperado (por ejemplo, de la BD): 500
     console.error(error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
+// GET /users/:id: con perfil y artículos
 export const getUserById = async (req, res) => {
   try {
     const user = await UserModel.findByPk(req.params.id, {
@@ -42,6 +46,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
+// POST /users: como register, pero el admin puede asignar el rol
 export const createUser = async (req, res) => {
   try {
     const { username, email, password, role, ...profileData } =
@@ -59,9 +64,11 @@ export const createUser = async (req, res) => {
         { ...profileData, user_id: newUser.id },
         { transaction },
       );
+      // El valor retornado es el resultado de sequelize.transaction
       return newUser;
     });
 
+    // Respuesta sin el hash de la contraseña
     return res.status(201).json({
       message: "Usuario creado exitosamente",
       user: { id: user.id, username, email, role: user.role },
@@ -72,10 +79,12 @@ export const createUser = async (req, res) => {
   }
 };
 
+// PUT /users/:id: actualización parcial; rehashea la contraseña si se envía
 export const updateUser = async (req, res) => {
   try {
     const data = matchedData(req, { locations: ["body"] });
 
+    // Sin campos para actualizar: 400
     if (Object.keys(data).length === 0) {
       return res
         .status(400)
@@ -109,6 +118,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// DELETE /users/:id: eliminación lógica (paranoid): completa deleted_at
 export const deleteUser = async (req, res) => {
   try {
     const user = await UserModel.findByPk(req.params.id);

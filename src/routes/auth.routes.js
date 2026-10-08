@@ -1,3 +1,4 @@
+// Rutas de autenticación
 import { Router } from "express";
 import {
   register,
@@ -14,10 +15,13 @@ import {
 } from "../middlewares/validations/auth.validations.js";
 import { updateProfileValidations } from "../middlewares/validations/user.validations.js";
 
+// Router: agrupa rutas; app.js lo monta bajo /api
 export const authRoutes = Router();
 
+// Públicas: validaciones -> validate -> controlador
 authRoutes.post("/auth/register", registerValidations, validate, register);
 authRoutes.post("/auth/login", loginValidations, validate, login);
+// Protegidas: authMiddleware verifica el JWT de la cookie
 authRoutes.get("/auth/profile", authMiddleware, getProfile);
 authRoutes.put(
   "/auth/profile",

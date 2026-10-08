@@ -1,7 +1,9 @@
+// Validaciones de usuarios y perfiles (también las usa auth.validations)
 import { body, param } from "express-validator";
 import { Op } from "sequelize";
 import { UserModel } from "../../models/index.js";
 
+// Función de orden superior: isUnique(campo) devuelve el validador (closure)
 // Unicidad: incluye a los usuarios eliminados lógicamente (paranoid: false)
 // y excluye al propio usuario cuando se edita
 const isUnique = (field) => async (value, { req }) => {
@@ -18,16 +20,15 @@ const isUnique = (field) => async (value, { req }) => {
   return true;
 };
 
+// Lookaheads (?=...): minúscula, mayúscula y dígito; mínimo 8 caracteres
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const passwordMessage =
   "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
 
-// isString() va antes que trim(): express-validator valida cada elemento de un
-// array por separado y trim() convierte cualquier valor en texto, así que sin
-// él un array o un objeto pasaban las validaciones y fallaban al guardar (500).
-// notEmpty({ ignore_whitespace: true }) rechaza también los textos con solo
-// espacios y bail() corta la cadena en el primer error, así no se consulta la
-// BD con datos inválidos
+// Datos de usuario obligatorios. isString() va antes que trim(): trim()
+// convierte cualquier valor en texto y un array u objeto fallaría al guardar (500).
+// notEmpty({ ignore_whitespace: true }) rechaza textos con solo espacios y
+// bail() corta en el primer error, así no se consulta la BD con datos inválidos
 export const userDataValidations = [
   body("username")
     .notEmpty({ ignore_whitespace: true }).withMessage("El username es obligatorio").bail()
@@ -49,6 +50,7 @@ export const userDataValidations = [
     .matches(passwordRegex).withMessage(passwordMessage),
 ];
 
+// Campos opcionales del perfil, compartidos por alta y edición
 const optionalProfileValidations = [
   body("biography")
     .optional()
@@ -67,6 +69,8 @@ const optionalProfileValidations = [
     .isDate().withMessage("La fecha de nacimiento debe tener el formato YYYY-MM-DD"),
 ];
 
+// Alta: nombre y apellido obligatorios; isAlpha("es-ES") admite tildes y ñ,
+// ignore permite espacios
 export const profileValidations = [
   body("first_name")
     .notEmpty({ ignore_whitespace: true }).withMessage("El nombre es obligatorio").bail()
@@ -83,6 +87,7 @@ export const profileValidations = [
   ...optionalProfileValidations,
 ];
 
+// Edición del perfil: los mismos campos, todos opcionales
 export const updateProfileValidations = [
   body("first_name")
     .optional()
@@ -99,11 +104,13 @@ export const updateProfileValidations = [
   ...optionalProfileValidations,
 ];
 
+// Rol opcional: user o admin (si falta, el modelo asigna user)
 const roleValidation = body("role")
   .optional()
   .isString().withMessage("El rol debe ser un texto").bail()
   .isIn(["user", "admin"]).withMessage("El rol debe ser user o admin");
 
+// param id: entero positivo y usuario no eliminado lógicamente
 export const userIdValidations = [
   param("id")
     .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
@@ -116,12 +123,14 @@ export const userIdValidations = [
     }),
 ];
 
+// Alta por admin: datos de usuario, rol y perfil
 export const createUserValidations = [
   ...userDataValidations,
   roleValidation,
   ...profileValidations,
 ];
 
+// Edición por admin: id válido y campos opcionales con unicidad
 export const updateUserValidations = [
   ...userIdValidations,
   body("username")
