@@ -1,3 +1,4 @@
+// Autorización por autoría: compara article.user_id con req.user.id
 import { ArticleModel, ArticleTagModel } from "../models/index.js";
 
 // Artículo de req.params.id: autor o admin
@@ -17,6 +18,7 @@ export const ownerMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
+    // Error inesperado (por ejemplo, de la BD): 500
     console.error(error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
@@ -26,8 +28,10 @@ export const ownerMiddleware = async (req, res, next) => {
 // El artículo sale del body (POST) o de la asociación en params (DELETE)
 export const articleTagOwnerMiddleware = async (req, res, next) => {
   try {
+    // ?. (optional chaining): en Express 5 req.body es undefined si no hay body
     let articleId = req.body?.article_id;
 
+    // DELETE: el artículo se obtiene desde la asociación
     if (req.params.articleTagId) {
       const articleTag = await ArticleTagModel.findByPk(
         req.params.articleTagId,

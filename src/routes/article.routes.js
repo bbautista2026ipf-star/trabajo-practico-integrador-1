@@ -1,3 +1,4 @@
+// Rutas de artículos
 import { Router } from "express";
 import {
   getAllArticles,
@@ -17,6 +18,7 @@ import {
   updateArticleValidations,
 } from "../middlewares/validations/article.validations.js";
 
+// Middlewares en orden: auth -> autoría -> validaciones -> validate -> controlador
 export const articleRoutes = Router();
 
 // /articles/user va antes que /articles/:id para que "user" no se tome como id
@@ -43,6 +45,7 @@ articleRoutes.post(
   validate,
   createArticle,
 );
+// PUT y DELETE: ownerMiddleware exige ser autor o admin
 articleRoutes.put(
   "/articles/:id",
   authMiddleware,

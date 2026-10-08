@@ -1,16 +1,20 @@
+// Controladores de etiquetas (CRUD)
 import { matchedData } from "express-validator";
 import { TagModel, ArticleModel } from "../models/index.js";
 
+// GET /tags: solo id y name (attributes)
 export const getAllTags = async (req, res) => {
   try {
     const tags = await TagModel.findAll({ attributes: ["id", "name"] });
     return res.status(200).json(tags);
   } catch (error) {
+    // Error inesperado (por ejemplo, de la BD): 500
     console.error(error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
+// GET /tags/:id: etiqueta con sus artículos (N:M)
 export const getTagById = async (req, res) => {
   try {
     const tag = await TagModel.findByPk(req.params.id, {
@@ -35,6 +39,7 @@ export const getTagById = async (req, res) => {
   }
 };
 
+// POST /tags: crea con los campos validados (matchedData)
 export const createTag = async (req, res) => {
   try {
     const data = matchedData(req);
@@ -47,6 +52,7 @@ export const createTag = async (req, res) => {
   }
 };
 
+// PUT /tags/:id: renombra la etiqueta (name obligatorio por validación)
 export const updateTag = async (req, res) => {
   try {
     const data = matchedData(req, { locations: ["body"] });
@@ -65,6 +71,7 @@ export const updateTag = async (req, res) => {
   }
 };
 
+// DELETE /tags/:id: borrado físico; la cascada elimina sus filas en article_tags
 export const deleteTag = async (req, res) => {
   try {
     const tag = await TagModel.findByPk(req.params.id);

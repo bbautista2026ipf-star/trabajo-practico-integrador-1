@@ -1,7 +1,9 @@
+// Validaciones de etiquetas
 import { body, param } from "express-validator";
 import { Op } from "sequelize";
 import { TagModel } from "../../models/index.js";
 
+// Nombre único; al editar excluye la propia etiqueta (Op.ne: distinto de)
 const isUniqueName = async (name, { req }) => {
   const where = { name };
 
@@ -16,6 +18,7 @@ const isUniqueName = async (name, { req }) => {
   return true;
 };
 
+// param id: entero positivo y etiqueta existente
 export const tagIdValidations = [
   param("id")
     .isInt({ min: 1 }).withMessage("El id debe ser un entero positivo").bail()
@@ -28,6 +31,7 @@ export const tagIdValidations = [
     }),
 ];
 
+// name: 2 a 30 caracteres, sin espacios (regex) y único
 export const createTagValidations = [
   body("name")
     .notEmpty({ ignore_whitespace: true }).withMessage("El nombre es obligatorio").bail()
@@ -38,6 +42,7 @@ export const createTagValidations = [
     .custom(isUniqueName),
 ];
 
+// Edición: id válido y las mismas reglas que la creación
 export const updateTagValidations = [
   ...tagIdValidations,
   ...createTagValidations,

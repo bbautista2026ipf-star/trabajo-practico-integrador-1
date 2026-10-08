@@ -1,3 +1,4 @@
+// Asociaciones entre modelos; punto único de import de los modelos
 import { UserModel } from "./user.model.js";
 import { ProfileModel } from "./profile.model.js";
 import { ArticleModel } from "./article.model.js";
@@ -6,6 +7,8 @@ import { ArticleTagModel } from "./articleTag.model.js";
 
 // User es paranoid: la cascada hacia Profile y Article solo actúa si el
 // usuario se borra físicamente (force: true)
+
+// Cada relación se declara en ambos sentidos; as es el alias usado en include
 
 // 1:1 User - Profile
 UserModel.hasOne(ProfileModel, {
@@ -44,4 +47,5 @@ TagModel.belongsToMany(ArticleModel, {
   onDelete: "CASCADE",
 });
 
+// Reexporta los modelos ya asociados
 export { UserModel, ProfileModel, ArticleModel, TagModel, ArticleTagModel };

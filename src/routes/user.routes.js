@@ -1,3 +1,4 @@
+// Rutas de usuarios: todas exigen rol admin
 import { Router } from "express";
 import {
   getAllUsers,
@@ -15,6 +16,7 @@ import {
   userIdValidations,
 } from "../middlewares/validations/user.validations.js";
 
+// Middlewares en orden: auth -> admin -> validaciones -> validate -> controlador
 export const userRoutes = Router();
 
 userRoutes.get("/users", authMiddleware, adminMiddleware, getAllUsers);
