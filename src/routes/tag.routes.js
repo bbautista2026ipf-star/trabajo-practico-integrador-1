@@ -1,3 +1,4 @@
+// Rutas de etiquetas
 import { Router } from "express";
 import {
   getAllTags,
@@ -15,8 +16,10 @@ import {
   tagIdValidations,
 } from "../middlewares/validations/tag.validations.js";
 
+// Middlewares en orden: auth -> admin -> validaciones -> validate -> controlador
 export const tagRoutes = Router();
 
+// Listado: cualquier usuario autenticado; el resto, solo admin
 tagRoutes.get("/tags", authMiddleware, getAllTags);
 tagRoutes.get(
   "/tags/:id",
