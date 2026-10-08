@@ -1,3 +1,4 @@
+// Controladores de artículos: consultas con Sequelize y respuestas JSON
 import { matchedData } from "express-validator";
 import { sequelize } from "../config/database.js";
 import {
@@ -20,10 +21,12 @@ const articleIncludes = [
     model: TagModel,
     as: "tags",
     attributes: ["id", "name"],
+    // Oculta las columnas de la tabla intermedia
     through: { attributes: [] },
   },
 ];
 
+// GET /articles: publicados, con autor y etiquetas
 export const getAllArticles = async (req, res) => {
   try {
     const articles = await ArticleModel.findAll({
@@ -33,11 +36,13 @@ export const getAllArticles = async (req, res) => {
 
     return res.status(200).json(articles);
   } catch (error) {
+    // Error inesperado (por ejemplo, de la BD): 500
     console.error(error);
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
+// GET /articles/:id: búsqueda por clave primaria (findByPk); 404 si no existe
 export const getArticleById = async (req, res) => {
   try {
     const article = await ArticleModel.findByPk(req.params.id, {
@@ -55,6 +60,7 @@ export const getArticleById = async (req, res) => {
   }
 };
 
+// GET /articles/user: publicados del usuario autenticado (req.user)
 export const getUserArticles = async (req, res) => {
   try {
     const articles = await ArticleModel.findAll({
@@ -69,6 +75,7 @@ export const getUserArticles = async (req, res) => {
   }
 };
 
+// GET /articles/user/:id: findOne filtra por id y autor
 export const getUserArticleById = async (req, res) => {
   try {
     const article = await ArticleModel.findOne({
@@ -87,11 +94,13 @@ export const getUserArticleById = async (req, res) => {
   }
 };
 
+// POST /articles: matchedData devuelve solo los campos validados
 export const createArticle = async (req, res) => {
   try {
     const data = matchedData(req);
     const article = await ArticleModel.create({
       ...data,
+      // ??: sin user_id, el autor es el usuario autenticado
       user_id: data.user_id ?? req.user.id,
     });
 
@@ -102,10 +111,13 @@ export const createArticle = async (req, res) => {
   }
 };
 
+// PUT /articles/:id: actualización parcial
 export const updateArticle = async (req, res) => {
   try {
+    // locations: solo campos del body (excluye el id de params)
     const data = matchedData(req, { locations: ["body"] });
 
+    // Sin campos para actualizar: 400
     if (Object.keys(data).length === 0) {
       return res
         .status(400)
@@ -127,6 +139,7 @@ export const updateArticle = async (req, res) => {
   }
 };
 
+// DELETE /articles/:id
 // Eliminación lógica (paranoid): la fila queda con deleted_at, así que la
 // cascada de la base de datos no actúa. Las asociaciones con etiquetas se
 // eliminan en la misma transacción: o se hacen las dos cosas o ninguna
